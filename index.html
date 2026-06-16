@@ -22,11 +22,10 @@
       color: var(--text);
       min-height: 100vh;
       padding: 16px;
-      padding-bottom: 40px;
-      transition: background 0.3s, color 0.3s;
+      padding-bottom: 60px;
     }
 
-    /* ---- Theme: Cool, lighter blue-green ---- */
+    /* ---- Theme: Cool blue-green ---- */
     body {
       --bg: #16191F;
       --card-bg: #22262E;
@@ -36,102 +35,178 @@
       --primary-text: #16191F;
       --accent: #7DD3F0;
       --secondary: #2C313A;
-      --border: #2C313A;
+      --border: #3A4049;
+      --danger: #FF6B6B;
     }
 
-    /* ---- Layout ---- */
+    /* ---- Header ---- */
     .app-header {
       text-align: center;
-      margin-bottom: 16px;
+      margin-bottom: 20px;
+      padding-top: 8px;
     }
 
     .app-header h1 {
-      font-size: 28px;
+      font-size: 30px;
       font-weight: 800;
       color: var(--primary);
       letter-spacing: -0.5px;
     }
 
+    /* ---- Cards ---- */
     .card {
       background: var(--card-bg);
       border-radius: 16px;
-      padding: 20px;
+      padding: 16px;
       margin-bottom: 16px;
       border: 1px solid var(--border);
     }
 
-    .card h2 {
-      font-size: 18px;
-      margin-bottom: 8px;
-    }
-
-    .card h3 {
-      font-size: 16px;
-      margin-bottom: 8px;
-      color: var(--text-muted);
-    }
-
-    .card p {
-      color: var(--text-muted);
-      font-size: 14px;
-      line-height: 1.5;
-      margin-bottom: 16px;
-    }
-
-    /* ---- Stats row ---- */
-    .stat-row {
+    /* ---- Collapsible section ---- */
+    .collapsible-header {
       display: flex;
       justify-content: space-between;
-      gap: 12px;
-      margin-bottom: 20px;
-    }
-
-    .stat {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
       align-items: center;
-      background: var(--secondary);
-      border-radius: 12px;
-      padding: 12px 8px;
+      cursor: pointer;
+      user-select: none;
+      -webkit-user-select: none;
     }
 
-    .stat-label {
-      font-size: 12px;
+    .collapsible-header h2 {
+      font-size: 15px;
+      font-weight: 600;
       color: var(--text-muted);
-      margin-bottom: 4px;
       text-transform: uppercase;
       letter-spacing: 0.5px;
     }
 
-    .stat-value {
-      font-size: 22px;
-      font-weight: 700;
-      color: var(--accent);
+    .collapsible-arrow {
+      font-size: 12px;
+      color: var(--text-muted);
+      transition: transform 0.2s;
     }
 
-    /* ---- Buttons ---- */
-    .primary-btn {
-      width: 100%;
-      padding: 16px;
+    .collapsible-arrow.open {
+      transform: rotate(180deg);
+    }
+
+    .collapsible-body {
+      display: none;
+      margin-top: 14px;
+    }
+
+    .collapsible-body.open {
+      display: block;
+    }
+
+    /* ---- Exercise list ---- */
+    .exercise-list {
+      list-style: none;
+      margin-bottom: 14px;
+    }
+
+    .exercise-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .exercise-item:last-child {
+      border-bottom: none;
+    }
+
+    .exercise-color-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .exercise-name {
+      flex: 1;
+      font-size: 16px;
+      font-weight: 500;
+    }
+
+    .exercise-name-input {
+      flex: 1;
+      background: var(--secondary);
+      border: 1px solid var(--primary);
+      border-radius: 8px;
+      padding: 6px 10px;
+      color: var(--text);
+      font-size: 15px;
+    }
+
+    .icon-btn {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      font-size: 16px;
+      padding: 4px 8px;
+      cursor: pointer;
+      border-radius: 6px;
+    }
+
+    .icon-btn.danger {
+      color: var(--danger);
+    }
+
+    .icon-btn.confirm {
+      color: var(--primary);
+    }
+
+    /* ---- Add exercise row ---- */
+    .add-exercise-row {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .add-exercise-row input {
+      flex: 1;
+      background: var(--secondary);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px 14px;
+      color: var(--text);
+      font-size: 15px;
+    }
+
+    .add-exercise-row input::placeholder {
+      color: var(--text-muted);
+    }
+
+    .add-exercise-row input:focus {
+      outline: none;
+      border-color: var(--primary);
+    }
+
+    .add-btn {
       background: var(--primary);
       color: var(--primary-text);
       border: none;
-      border-radius: 12px;
-      font-size: 18px;
+      border-radius: 10px;
+      padding: 10px 16px;
+      font-size: 20px;
       font-weight: 700;
-      margin-bottom: 12px;
+      cursor: pointer;
+      line-height: 1;
     }
 
-    .secondary-btn {
-      width: 100%;
-      padding: 14px;
-      background: transparent;
-      color: var(--text);
-      border: 2px solid var(--border);
-      border-radius: 12px;
-      font-size: 16px;
-      font-weight: 600;
+    /* ---- Placeholder for future steps ---- */
+    .placeholder-card {
+      text-align: center;
+      padding: 40px 20px;
+      color: var(--text-muted);
+      font-size: 15px;
+    }
+
+    .placeholder-card .icon {
+      font-size: 48px;
+      margin-bottom: 12px;
     }
   </style>
 </head>
@@ -142,33 +217,32 @@
   </header>
 
   <main>
-    <section class="card">
-      <h2>Step 1 Preview</h2>
-      <p>This is a placeholder shell to confirm the data model loads correctly and to preview the color themes.</p>
 
-      <div class="stat-row">
-        <div class="stat">
-          <span class="stat-label">Today's Best</span>
-          <span class="stat-value">45s</span>
-        </div>
-        <div class="stat">
-          <span class="stat-label">Streak</span>
-          <span class="stat-value">3 🔥</span>
-        </div>
-        <div class="stat">
-          <span class="stat-label">PB</span>
-          <span class="stat-value">90s</span>
+    <!-- ============================================
+         MANAGE EXERCISES (collapsible)
+         ============================================ -->
+    <div class="card" id="manage-exercises-card">
+      <div class="collapsible-header" onclick="toggleManageExercises()">
+        <h2>Manage Exercises</h2>
+        <span class="collapsible-arrow" id="manage-arrow">▼</span>
+      </div>
+      <div class="collapsible-body" id="manage-body">
+        <ul class="exercise-list" id="exercise-list"></ul>
+        <div class="add-exercise-row">
+          <input type="text" id="new-exercise-input" placeholder="New exercise name..." maxlength="40">
+          <button class="add-btn" onclick="addExercise()">+</button>
         </div>
       </div>
+    </div>
 
-      <button class="primary-btn">Start Timer</button>
-      <button class="secondary-btn">Export Data</button>
-    </section>
+    <!-- ============================================
+         TIMER PLACEHOLDER (step 3)
+         ============================================ -->
+    <div class="card placeholder-card">
+      <div class="icon">⏱️</div>
+      Timer coming in step 3
+    </div>
 
-    <section class="card">
-      <h3>Data Check</h3>
-      <p id="data-check">Loading...</p>
-    </section>
   </main>
 
   <!-- ============================================
@@ -200,12 +274,14 @@
   <script>
     const STORAGE_KEY = "plankometer_data";
 
+    const DEFAULT_EXERCISES = [
+      { id: "ex_plank", name: "Plank", color: "#4FE0CB" },
+      { id: "ex_wallsit", name: "Wall Sit", color: "#7DD3F0" },
+      { id: "ex_hang", name: "Hang", color: "#A78BFA" }
+    ];
+
     const DEFAULT_DATA = {
-      exercises: [
-        { id: "ex_plank", name: "Plank", color: "#FF6B35" },
-        { id: "ex_wallsit", name: "Wall Sit", color: "#4ECDC4" },
-        { id: "ex_hang", name: "Hang", color: "#FFD23F" }
-      ],
+      exercises: DEFAULT_EXERCISES,
       sessions: [],
       personalBests: {},
       streaks: {
@@ -222,7 +298,7 @@
         }
         const parsed = JSON.parse(raw);
         return {
-          exercises: parsed.exercises || DEFAULT_DATA.exercises,
+          exercises: parsed.exercises || DEFAULT_EXERCISES,
           sessions: parsed.sessions || [],
           personalBests: parsed.personalBests || {},
           streaks: parsed.streaks || { overall: { current: 0, longest: 0, lastDate: null } }
@@ -263,11 +339,9 @@
       const json = JSON.stringify(data, null, 2);
       const blob = new Blob([json], { type: "application/json" });
       const url = URL.createObjectURL(blob);
-
       const a = document.createElement("a");
       a.href = url;
-      const dateStr = getTodayString();
-      a.download = `plankometer-backup-${dateStr}.json`;
+      a.download = `plankometer-backup-${getTodayString()}.json`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
@@ -277,26 +351,22 @@
     function importData(jsonString) {
       try {
         const parsed = JSON.parse(jsonString);
-
         if (!parsed.exercises || !Array.isArray(parsed.exercises)) {
           throw new Error("Invalid file: missing exercises list");
         }
         if (!parsed.sessions || !Array.isArray(parsed.sessions)) {
           throw new Error("Invalid file: missing sessions list");
         }
-
         const confirmed = confirm(
           "This will replace ALL current data with the imported file. This cannot be undone. Continue?"
         );
         if (!confirmed) return false;
-
         saveData({
           exercises: parsed.exercises,
           sessions: parsed.sessions,
           personalBests: parsed.personalBests || {},
           streaks: parsed.streaks || { overall: { current: 0, longest: 0, lastDate: null } }
         });
-
         return true;
       } catch (err) {
         console.error("Import failed:", err);
@@ -307,14 +377,137 @@
   </script>
 
   <!-- ============================================
+       EXERCISE MANAGEMENT
+       ============================================ -->
+  <script>
+    // Color palette — cycles through these for new exercises
+    const EXERCISE_COLORS = [
+      "#4FE0CB", "#7DD3F0", "#A78BFA", "#F472B6",
+      "#FB923C", "#FACC15", "#34D399", "#60A5FA"
+    ];
+
+    function toggleManageExercises() {
+      const body = document.getElementById("manage-body");
+      const arrow = document.getElementById("manage-arrow");
+      const isOpen = body.classList.contains("open");
+      body.classList.toggle("open", !isOpen);
+      arrow.classList.toggle("open", !isOpen);
+    }
+
+    function renderExerciseList() {
+      const data = loadData();
+      const list = document.getElementById("exercise-list");
+      list.innerHTML = "";
+
+      data.exercises.forEach(function(ex, index) {
+        const li = document.createElement("li");
+        li.className = "exercise-item";
+        li.id = "exercise-item-" + index;
+        li.innerHTML =
+          '<div class="exercise-color-dot" style="background:' + ex.color + '"></div>' +
+          '<span class="exercise-name">' + ex.name + '</span>' +
+          '<button class="icon-btn" onclick="startRenameExercise(' + index + ')">✏️</button>' +
+          '<button class="icon-btn danger" onclick="deleteExercise(' + index + ')">🗑️</button>';
+        list.appendChild(li);
+      });
+    }
+
+    function startRenameExercise(index) {
+      const data = loadData();
+      const ex = data.exercises[index];
+      const item = document.getElementById("exercise-item-" + index);
+      item.innerHTML =
+        '<div class="exercise-color-dot" style="background:' + ex.color + '"></div>' +
+        '<input class="exercise-name-input" id="rename-input-' + index + '" value="' + ex.name + '" maxlength="40">' +
+        '<button class="icon-btn confirm" onclick="confirmRenameExercise(' + index + ')">✓</button>' +
+        '<button class="icon-btn" onclick="renderExerciseList()">✕</button>';
+      const input = document.getElementById("rename-input-" + index);
+      input.focus();
+      input.select();
+    }
+
+    function confirmRenameExercise(index) {
+      const input = document.getElementById("rename-input-" + index);
+      const newName = input.value.trim();
+      if (!newName) {
+        alert("Exercise name cannot be empty.");
+        return;
+      }
+      const data = loadData();
+      data.exercises[index].name = newName;
+      saveData(data);
+      renderExerciseList();
+    }
+
+    function deleteExercise(index) {
+      const data = loadData();
+      const ex = data.exercises[index];
+
+      // Check if this exercise has any sessions
+      const hasSessions = data.sessions.some(function(s) { return s.exerciseId === ex.id; });
+      if (hasSessions) {
+        const confirmed = confirm(
+          'Delete "' + ex.name + '"? This exercise has logged sessions — they will also be deleted. This cannot be undone.'
+        );
+        if (!confirmed) return;
+      } else {
+        const confirmed = confirm('Delete "' + ex.name + '"?');
+        if (!confirmed) return;
+      }
+
+      // Remove exercise
+      data.exercises.splice(index, 1);
+      // Remove related sessions
+      data.sessions = data.sessions.filter(function(s) { return s.exerciseId !== ex.id; });
+      // Remove personal best
+      delete data.personalBests[ex.id];
+      // Remove streak
+      delete data.streaks[ex.id];
+
+      saveData(data);
+      renderExerciseList();
+    }
+
+    function addExercise() {
+      const input = document.getElementById("new-exercise-input");
+      const name = input.value.trim();
+      if (!name) {
+        input.focus();
+        return;
+      }
+
+      const data = loadData();
+
+      // Check for duplicate name (case-insensitive)
+      const duplicate = data.exercises.some(function(ex) {
+        return ex.name.toLowerCase() === name.toLowerCase();
+      });
+      if (duplicate) {
+        alert('An exercise called "' + name + '" already exists.');
+        return;
+      }
+
+      // Pick next color from palette
+      const color = EXERCISE_COLORS[data.exercises.length % EXERCISE_COLORS.length];
+      const newEx = { id: generateId("ex"), name: name, color: color };
+      data.exercises.push(newEx);
+      saveData(data);
+
+      input.value = "";
+      renderExerciseList();
+    }
+
+    // Allow pressing Enter to add exercise
+    document.getElementById("new-exercise-input").addEventListener("keydown", function(e) {
+      if (e.key === "Enter") addExercise();
+    });
+  </script>
+
+  <!-- ============================================
        INIT
        ============================================ -->
   <script>
-    // Verify data model loads correctly
-    const data = loadData();
-    document.getElementById('data-check').textContent =
-      `Loaded ${data.exercises.length} exercises, ${data.sessions.length} sessions. ` +
-      `Exercises: ${data.exercises.map(e => e.name).join(', ')}`;
+    renderExerciseList();
   </script>
 
 </body>
