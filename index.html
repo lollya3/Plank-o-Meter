@@ -1346,6 +1346,31 @@
       return d.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", year: "numeric" });
     }
 
+    function cancelEditSession(sessionId) {
+      const data = loadData();
+      const session = data.sessions.find(function(s) { return s.id === sessionId; });
+      if (!session) { renderHistory(); return; }
+
+      const ex = data.exercises.find(function(e) { return e.id === session.exerciseId; });
+      const exName = ex ? ex.name : "Unknown";
+      const exColor = ex ? ex.color : "#9AA5B1";
+
+      const item = document.getElementById("history-item-" + sessionId);
+      item.innerHTML =
+        '<div class="history-item-top">' +
+          '<div class="history-item-dot" style="background:' + exColor + '"></div>' +
+          '<div class="history-item-info">' +
+            '<div class="history-item-name">' + exName + '</div>' +
+            '<div class="history-item-date">' + formatHistoryDate(session.date) + '</div>' +
+          '</div>' +
+          '<div class="history-item-duration">' + formatDuration(session.duration) + '</div>' +
+        '</div>' +
+        '<div class="history-item-actions">' +
+          '<button class="icon-btn" onclick="startEditSession(\'' + sessionId + '\')">✏️ Edit</button>' +
+          '<button class="icon-btn danger" onclick="deleteSession(\'' + sessionId + '\')">🗑️ Delete</button>' +
+        '</div>';
+    }
+
     function startEditSession(sessionId) {
       const data = loadData();
       const session = data.sessions.find(function(s) { return s.id === sessionId; });
@@ -1367,7 +1392,7 @@
           '<input type="number" id="edit-duration-' + sessionId + '" value="' + session.duration + '" step="0.1" min="0" placeholder="Duration (seconds)">' +
           '<input type="date" id="edit-date-' + sessionId + '" value="' + session.date + '">' +
           '<div class="history-edit-btn-row">' +
-            '<button style="background:var(--secondary);color:var(--text);border:1px solid var(--border)" onclick="renderHistory()">Cancel</button>' +
+            '<button style="background:var(--secondary);color:var(--text);border:1px solid var(--border)" onclick="cancelEditSession(\'' + sessionId + '\')">Cancel</button>' +
             '<button style="background:var(--primary);color:var(--primary-text)" onclick="confirmEditSession(\'' + sessionId + '\')">Save</button>' +
           '</div>' +
         '</div>';
