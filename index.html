@@ -405,6 +405,153 @@
       color: var(--text-muted);
       margin-top: 3px;
     }
+
+    /* ---- History card ---- */
+    .history-filter-row {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 14px;
+    }
+
+    .history-filter-row select {
+      flex: 1;
+      background: var(--secondary);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px 12px;
+      color: var(--text);
+      font-size: 14px;
+      -webkit-appearance: none;
+      appearance: none;
+    }
+
+    .history-list {
+      list-style: none;
+    }
+
+    .history-item {
+      padding: 12px 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .history-item:last-child {
+      border-bottom: none;
+    }
+
+    .history-item-top {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .history-item-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .history-item-info {
+      flex: 1;
+    }
+
+    .history-item-name {
+      font-size: 15px;
+      font-weight: 600;
+    }
+
+    .history-item-date {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    .history-item-duration {
+      font-size: 17px;
+      font-weight: 700;
+      color: var(--accent);
+    }
+
+    .history-item-actions {
+      display: flex;
+      gap: 6px;
+      margin-top: 10px;
+      margin-left: 20px;
+    }
+
+    .history-edit-row {
+      margin-top: 10px;
+      margin-left: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .history-edit-row input {
+      background: var(--secondary);
+      border: 1px solid var(--primary);
+      border-radius: 8px;
+      padding: 8px 12px;
+      color: var(--text);
+      font-size: 15px;
+      width: 100%;
+    }
+
+    .history-edit-btn-row {
+      display: flex;
+      gap: 8px;
+    }
+
+    .history-edit-btn-row button {
+      flex: 1;
+      padding: 10px;
+      border: none;
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .history-empty {
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 14px;
+      padding: 24px 0;
+    }
+
+    .export-row {
+      display: flex;
+      gap: 8px;
+      margin-top: 14px;
+      padding-top: 14px;
+      border-top: 1px solid var(--border);
+    }
+
+    .export-row button {
+      flex: 1;
+      padding: 12px;
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      border: 1px solid var(--border);
+    }
+
+    .export-btn {
+      background: var(--secondary);
+      color: var(--text);
+    }
+
+    .import-btn {
+      background: var(--secondary);
+      color: var(--text);
+    }
+
+    .danger-btn {
+      background: transparent;
+      color: var(--danger);
+      border-color: var(--danger) !important;
+    }
   </style>
 </head>
 <body>
@@ -490,6 +637,34 @@
           <div class="streak-box-value" id="stat-streak-overall">0</div>
           <div class="streak-box-sub" id="stat-streak-overall-longest">Longest: 0</div>
         </div>
+      </div>
+    </div>
+
+    <!-- ============================================
+         HISTORY (collapsible)
+         ============================================ -->
+    <div class="card">
+      <div class="collapsible-header" onclick="toggleHistory()">
+        <h2>History</h2>
+        <span class="collapsible-arrow" id="history-arrow">▼</span>
+      </div>
+      <div class="collapsible-body" id="history-body">
+
+        <div class="history-filter-row">
+          <select id="history-filter" onchange="renderHistory()">
+            <option value="all">All exercises</option>
+          </select>
+        </div>
+
+        <ul class="history-list" id="history-list"></ul>
+
+        <div class="export-row">
+          <button class="export-btn" onclick="exportData()">⬇️ Export</button>
+          <button class="import-btn" onclick="triggerImport()">⬆️ Import</button>
+          <button class="danger-btn" onclick="clearAllData()">🗑️ Reset</button>
+        </div>
+
+        <input type="file" id="import-file-input" accept=".json" style="display:none">
       </div>
     </div>
 
@@ -1094,11 +1269,197 @@
   </script>
 
   <!-- ============================================
+       HISTORY
+       ============================================ -->
+  <script>
+    function toggleHistory() {
+      const body = document.getElementById("history-body");
+      const arrow = document.getElementById("history-arrow");
+      const isOpen = body.classList.contains("open");
+      body.classList.toggle("open", !isOpen);
+      arrow.classList.toggle("open", !isOpen);
+      if (!isOpen) renderHistory();
+    }
+
+    function renderHistoryFilter() {
+      const data = loadData();
+      const select = document.getElementById("history-filter");
+      const current = select.value;
+      select.innerHTML = '<option value="all">All exercises</option>';
+      data.exercises.forEach(function(ex) {
+        const opt = document.createElement("option");
+        opt.value = ex.id;
+        opt.textContent = ex.name;
+        select.appendChild(opt);
+      });
+      // Restore selection if still valid
+      if (current && [...select.options].some(function(o) { return o.value === current; })) {
+        select.value = current;
+      }
+    }
+
+    function renderHistory() {
+      const data = loadData();
+      const filter = document.getElementById("history-filter").value;
+      const list = document.getElementById("history-list");
+      list.innerHTML = "";
+
+      // Filter and sort sessions newest first
+      let sessions = data.sessions.slice();
+      if (filter !== "all") {
+        sessions = sessions.filter(function(s) { return s.exerciseId === filter; });
+      }
+      sessions.sort(function(a, b) { return b.timestamp - a.timestamp; });
+
+      if (sessions.length === 0) {
+        list.innerHTML = '<li class="history-empty">No sessions yet</li>';
+        return;
+      }
+
+      sessions.forEach(function(session) {
+        const ex = data.exercises.find(function(e) { return e.id === session.exerciseId; });
+        const exName = ex ? ex.name : "Unknown";
+        const exColor = ex ? ex.color : "#9AA5B1";
+
+        const li = document.createElement("li");
+        li.className = "history-item";
+        li.id = "history-item-" + session.id;
+        li.innerHTML =
+          '<div class="history-item-top">' +
+            '<div class="history-item-dot" style="background:' + exColor + '"></div>' +
+            '<div class="history-item-info">' +
+              '<div class="history-item-name">' + exName + '</div>' +
+              '<div class="history-item-date">' + formatHistoryDate(session.date) + '</div>' +
+            '</div>' +
+            '<div class="history-item-duration">' + formatDuration(session.duration) + '</div>' +
+          '</div>' +
+          '<div class="history-item-actions">' +
+            '<button class="icon-btn" onclick="startEditSession(\'' + session.id + '\')">✏️ Edit</button>' +
+            '<button class="icon-btn danger" onclick="deleteSession(\'' + session.id + '\')">🗑️ Delete</button>' +
+          '</div>';
+        list.appendChild(li);
+      });
+    }
+
+    function formatHistoryDate(dateStr) {
+      const d = new Date(dateStr + "T00:00:00");
+      return d.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", year: "numeric" });
+    }
+
+    function startEditSession(sessionId) {
+      const data = loadData();
+      const session = data.sessions.find(function(s) { return s.id === sessionId; });
+      if (!session) return;
+
+      const item = document.getElementById("history-item-" + sessionId);
+      const ex = data.exercises.find(function(e) { return e.id === session.exerciseId; });
+      const exName = ex ? ex.name : "Unknown";
+      const exColor = ex ? ex.color : "#9AA5B1";
+
+      item.innerHTML =
+        '<div class="history-item-top">' +
+          '<div class="history-item-dot" style="background:' + exColor + '"></div>' +
+          '<div class="history-item-info">' +
+            '<div class="history-item-name">' + exName + '</div>' +
+          '</div>' +
+        '</div>' +
+        '<div class="history-edit-row">' +
+          '<input type="number" id="edit-duration-' + sessionId + '" value="' + session.duration + '" step="0.1" min="0" placeholder="Duration (seconds)">' +
+          '<input type="date" id="edit-date-' + sessionId + '" value="' + session.date + '">' +
+          '<div class="history-edit-btn-row">' +
+            '<button style="background:var(--secondary);color:var(--text);border:1px solid var(--border)" onclick="renderHistory()">Cancel</button>' +
+            '<button style="background:var(--primary);color:var(--primary-text)" onclick="confirmEditSession(\'' + sessionId + '\')">Save</button>' +
+          '</div>' +
+        '</div>';
+    }
+
+    function confirmEditSession(sessionId) {
+      const durationInput = document.getElementById("edit-duration-" + sessionId);
+      const dateInput = document.getElementById("edit-date-" + sessionId);
+
+      const newDuration = parseFloat(durationInput.value);
+      const newDate = dateInput.value;
+
+      if (isNaN(newDuration) || newDuration < 0) {
+        alert("Please enter a valid duration.");
+        return;
+      }
+      if (!newDate) {
+        alert("Please enter a valid date.");
+        return;
+      }
+
+      const data = loadData();
+      const idx = data.sessions.findIndex(function(s) { return s.id === sessionId; });
+      if (idx === -1) return;
+
+      data.sessions[idx].duration = Math.round(newDuration * 10) / 10;
+      data.sessions[idx].date = newDate;
+      saveData(data);
+
+      recalculateStreaks();
+      renderStats();
+      renderHistory();
+    }
+
+    function deleteSession(sessionId) {
+      const confirmed = confirm("Delete this session? This cannot be undone.");
+      if (!confirmed) return;
+
+      const data = loadData();
+      data.sessions = data.sessions.filter(function(s) { return s.id !== sessionId; });
+      saveData(data);
+
+      recalculateStreaks();
+      renderStats();
+      renderHistory();
+    }
+
+    function clearAllData() {
+      const confirmed = confirm("Reset ALL data? This will delete every session, personal best, and streak. This cannot be undone.");
+      if (!confirmed) return;
+      const data = loadData();
+      data.sessions = [];
+      data.personalBests = {};
+      data.streaks = { overall: { current: 0, longest: 0, lastDate: null } };
+      saveData(data);
+      recalculateStreaks();
+      renderStats();
+      renderHistory();
+    }
+
+    function triggerImport() {
+      document.getElementById("import-file-input").click();
+    }
+
+    document.addEventListener("DOMContentLoaded", function() {
+      document.getElementById("import-file-input").addEventListener("change", function(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = function(evt) {
+          const success = importData(evt.target.result);
+          if (success) {
+            recalculateStreaks();
+            renderExerciseList();
+            renderStats();
+            renderHistory();
+            alert("Import successful!");
+          }
+        };
+        reader.readAsText(file);
+        e.target.value = "";
+      });
+    });
+  </script>
+
+  <!-- ============================================
        INIT
        ============================================ -->
   <script>
     recalculateStreaks();
     renderExerciseList();
+    renderHistoryFilter();
     renderStats();
   </script>
 
