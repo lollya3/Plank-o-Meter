@@ -330,6 +330,81 @@
     .hidden {
       display: none !important;
     }
+
+    /* ---- Stats card ---- */
+    .stats-card-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 14px;
+    }
+
+    .stat-row {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+
+    .stat-box {
+      flex: 1;
+      background: var(--secondary);
+      border-radius: 12px;
+      padding: 12px 8px;
+      text-align: center;
+    }
+
+    .stat-box-label {
+      font-size: 11px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 6px;
+    }
+
+    .stat-box-value {
+      font-size: 20px;
+      font-weight: 800;
+      color: var(--accent);
+    }
+
+    .stat-box-value.highlight {
+      color: var(--primary);
+    }
+
+    .streak-row {
+      display: flex;
+      gap: 10px;
+    }
+
+    .streak-box {
+      flex: 1;
+      background: var(--secondary);
+      border-radius: 12px;
+      padding: 12px 8px;
+      text-align: center;
+    }
+
+    .streak-box-label {
+      font-size: 11px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 6px;
+    }
+
+    .streak-box-value {
+      font-size: 20px;
+      font-weight: 800;
+      color: var(--accent);
+    }
+
+    .streak-box-sub {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-top: 3px;
+    }
   </style>
 </head>
 <body>
@@ -388,11 +463,34 @@
     </div>
 
     <!-- ============================================
-         STATS PLACEHOLDER (future step)
+         STATS
          ============================================ -->
-    <div class="card placeholder-card">
-      <div class="icon">📊</div>
-      Today's best / PB / streak coming soon
+    <div class="card" id="stats-card">
+      <div class="stats-card-title" id="stats-exercise-name">Plank</div>
+
+      <div class="stat-row">
+        <div class="stat-box">
+          <div class="stat-box-label">Today's Best</div>
+          <div class="stat-box-value" id="stat-today">—</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-box-label">Personal Best</div>
+          <div class="stat-box-value highlight" id="stat-pb">—</div>
+        </div>
+      </div>
+
+      <div class="streak-row">
+        <div class="streak-box">
+          <div class="streak-box-label">🔥 This Exercise</div>
+          <div class="streak-box-value" id="stat-streak-exercise">0</div>
+          <div class="streak-box-sub" id="stat-streak-exercise-longest">Longest: 0</div>
+        </div>
+        <div class="streak-box">
+          <div class="streak-box-label">⚡ Overall</div>
+          <div class="streak-box-value" id="stat-streak-overall">0</div>
+          <div class="streak-box-sub" id="stat-streak-overall-longest">Longest: 0</div>
+        </div>
+      </div>
     </div>
 
   </main>
@@ -711,6 +809,7 @@
 
     function onExerciseChange() {
       setLastUsedExerciseId(getSelectedExerciseId());
+      renderStats();
     }
 
     function formatSeconds(totalSeconds) {
@@ -823,6 +922,8 @@
       data.sessions.push(session);
       saveData(data);
 
+      recalculateStreaks();
+      renderStats();
       hideReviewScreen();
     }
 
@@ -837,10 +938,168 @@
   </script>
 
   <!-- ============================================
+       STATS & STREAKS
+       ============================================ -->
+  <script>
+    // Format seconds into a readable string e.g. "1m 23.4s" or "45.2s"
+    function formatDuration(seconds) {
+      if (seconds === null || seconds === undefined) return "—";
+      if (seconds >= 60) {
+        const mins = Math.floor(seconds / 60);
+        const secs = (seconds % 60).toFixed(1);
+        return mins + "m " + secs + "s";
+      }
+      return seconds.toFixed(1) + "s";
+    }
+
+    // ---- Streak calculation ----
+    // Returns the number of calendar days between two YYYY-MM-DD strings
+    function daysBetween(dateStr1, dateStr2) {
+      const d1 = new Date(dateStr1 + "T00:00:00");
+      const d2 = new Date(dateStr2 + "T00:00:00");
+      return Math.round(Math.abs((d2 - d1) / (1000 * 60 * 60 * 24)));
+    }
+
+    // Recalculate and save streaks based on current sessions.
+    // Called on app load and after every session save.
+    function recalculateStreaks() {
+      const data = loadData();
+      const today = getTodayString();
+
+      // ---- Per-exercise streaks ----
+      data.exercises.forEach(function(ex) {
+        // Get all unique dates for this exercise, sorted ascending
+        const dates = data.sessions
+          .filter(function(s) { return s.exerciseId === ex.id; })
+          .map(function(s) { return s.date; });
+
+        const uniqueDates = [...new Set(dates)].sort();
+
+        if (uniqueDates.length === 0) {
+          data.streaks[ex.id] = { current: 0, longest: 0, lastDate: null };
+          return;
+        }
+
+        const lastDate = uniqueDates[uniqueDates.length - 1];
+
+        // If last session was before yesterday, streak is broken
+        const gapFromToday = daysBetween(lastDate, today);
+        if (gapFromToday > 1) {
+          const existing = data.streaks[ex.id] || { longest: 0 };
+          data.streaks[ex.id] = {
+            current: 0,
+            longest: existing.longest || 0,
+            lastDate: lastDate
+          };
+          return;
+        }
+
+        // Count current streak backwards from most recent date
+        let current = 1;
+        for (let i = uniqueDates.length - 1; i > 0; i--) {
+          if (daysBetween(uniqueDates[i - 1], uniqueDates[i]) === 1) {
+            current++;
+          } else {
+            break;
+          }
+        }
+
+        const existing = data.streaks[ex.id] || { longest: 0 };
+        const longest = Math.max(current, existing.longest || 0);
+        data.streaks[ex.id] = { current: current, longest: longest, lastDate: lastDate };
+      });
+
+      // ---- Overall streak (any exercise on a given day) ----
+      const allDates = data.sessions.map(function(s) { return s.date; });
+      const uniqueAllDates = [...new Set(allDates)].sort();
+
+      if (uniqueAllDates.length === 0) {
+        data.streaks.overall = { current: 0, longest: 0, lastDate: null };
+      } else {
+        const lastDate = uniqueAllDates[uniqueAllDates.length - 1];
+        const gapFromToday = daysBetween(lastDate, today);
+
+        if (gapFromToday > 1) {
+          const existing = data.streaks.overall || { longest: 0 };
+          data.streaks.overall = {
+            current: 0,
+            longest: existing.longest || 0,
+            lastDate: lastDate
+          };
+        } else {
+          let current = 1;
+          for (let i = uniqueAllDates.length - 1; i > 0; i--) {
+            if (daysBetween(uniqueAllDates[i - 1], uniqueAllDates[i]) === 1) {
+              current++;
+            } else {
+              break;
+            }
+          }
+          const existing = data.streaks.overall || { longest: 0 };
+          const longest = Math.max(current, existing.longest || 0);
+          data.streaks.overall = { current: current, longest: longest, lastDate: lastDate };
+        }
+      }
+
+      // ---- Personal bests ----
+      data.exercises.forEach(function(ex) {
+        const exSessions = data.sessions.filter(function(s) { return s.exerciseId === ex.id; });
+        if (exSessions.length === 0) {
+          delete data.personalBests[ex.id];
+          return;
+        }
+        const best = exSessions.reduce(function(max, s) {
+          return s.duration > max.duration ? s : max;
+        }, exSessions[0]);
+        data.personalBests[ex.id] = { duration: best.duration, date: best.date };
+      });
+
+      saveData(data);
+      return data;
+    }
+
+    // ---- Render stats for the currently-selected exercise ----
+    function renderStats() {
+      const data = loadData();
+      const exerciseId = getSelectedExerciseId();
+      const today = getTodayString();
+
+      // Exercise name in stats title
+      const ex = data.exercises.find(function(e) { return e.id === exerciseId; });
+      document.getElementById("stats-exercise-name").textContent = ex ? ex.name : "—";
+
+      // Today's best
+      const todaySessions = data.sessions.filter(function(s) {
+        return s.exerciseId === exerciseId && s.date === today;
+      });
+      const todayBest = todaySessions.length > 0
+        ? Math.max.apply(null, todaySessions.map(function(s) { return s.duration; }))
+        : null;
+      document.getElementById("stat-today").textContent = formatDuration(todayBest);
+
+      // Personal best
+      const pb = data.personalBests[exerciseId];
+      document.getElementById("stat-pb").textContent = pb ? formatDuration(pb.duration) : "—";
+
+      // Per-exercise streak
+      const exStreak = data.streaks[exerciseId] || { current: 0, longest: 0 };
+      document.getElementById("stat-streak-exercise").textContent = exStreak.current + " day" + (exStreak.current === 1 ? "" : "s");
+      document.getElementById("stat-streak-exercise-longest").textContent = "Longest: " + (exStreak.longest || 0);
+
+      // Overall streak
+      const overall = data.streaks.overall || { current: 0, longest: 0 };
+      document.getElementById("stat-streak-overall").textContent = overall.current + " day" + (overall.current === 1 ? "" : "s");
+      document.getElementById("stat-streak-overall-longest").textContent = "Longest: " + (overall.longest || 0);
+    }
+  </script>
+
+  <!-- ============================================
        INIT
        ============================================ -->
   <script>
+    recalculateStreaks();
     renderExerciseList();
+    renderStats();
   </script>
 
 </body>
