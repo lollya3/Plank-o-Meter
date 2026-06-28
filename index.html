@@ -4,6 +4,12 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>Plank-o-Meter</title>
+  <!-- iOS Home Screen -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Plank-o-Meter">
+  <meta name="theme-color" content="#16191F">
+  <link rel="apple-touch-icon" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAALQAAAC0CAIAAACyr5FlAAADx0lEQVR4nO3dy40aQRSGUUdhyStCcprOxUk4AG+994IRwwC3qe6uftS9R/oCKKSjn+Ex1LfvPy7Sy74dfgKdNjgUBofC4FAYHAqDQ2FwKAwOhcGhMDgUBofC4FAYHAqDQ2FwKAwOhcGhMDgUBofC4FAYHAqDQ2FwKAwOhcGhMDgUBofC4FAYHAqDQ2FwLOnXv7/XDj/JpsExuyuLn39+w6Ev3WTAocfuZcChz0rNBhwzupcBhz57lgGHPrqXUWQ24GjqYTbg0EcvZcChFzLqzAYcb3qWAYcu0WzAoSkZcJQuklFqNuB4XSQDjupNzwYcdZuQUW024PjStAw4SvdWBhxFMxvPwXFpkQFH0VpkwFG0RhlwlMtsTFQaR6MMOMo1SwYctWqUUXY26uJonw04ajVXBhxVmiWj8mwUxdEuA47jD7Fbc2cDjuMPsU/LZMCRvwUyis9GLRxzZcBRAsfi2YDj+ENs2jIZZiM/jsUy4CiBY7EMODLjMBsrS4tjjQw4ruXEsVIGHNfS4lgpA46cOMxGr7LhWC8DjlupcPSSAce1bDhWyjAb9+XB0WU24LgvCY6OMuC4lQFHLxlm46EkOLrIgOOh4XF0nA04HhobR3cZcNw3MI6+MszGc2Pj6CjjthxFrgVtaWwcHbMizw2Mo2NwvAyOy8tbuvp2+ANcFhyXh2eovn/HDD1CcHy2BQ7LkSEynoPjIzKeg+Oy0ftpo8uA40LGRHB0fkJJIwMOH91NVRpH328JJZMBR08Zhz+c7tXF4WunbyuKg4yW6uIg420VcfjHuMbK4SCjvYo41rOoIKMcjvU/91OExbVCOMiYWxUcZCyoEA4y5lYCx8rfnKwpowQOMhZXAgcZy0qOY819CcVlJMfhJo2VJcdBxprS4nCj2/py4iCjS2lxkLG+hDjmzgYZUdlwzJLhJet0CXEYjF6lwtE+G2S0lAcHGd1LhYOMviXB0TgbZMwqAw4yNioJDjK2aHgcb2fDmxmLGxtHo4zDzzloA+MgY+vGxkHGpo2KY3o2yOjSkDjI2KdRcZCxQ+PhiGbDS9buDYZjWsbhx0vWeDjI2K2RcET3bZGxUcPgIGP/RsJBxs6NgeN5NsjYoQFwkHFUY+DwZsYhnR3H/WxgsXOnxkHGsZ0dBxkHdl4ct9kg46hOioOMM3ReHGQc3nlxkHF4J8WhMwSHwuBQGBwKg0NhcCgMDoXBoTA4FAaHwuBQGBwKg0NhcCgMDoXBoTA4FAaHwuBQGBwKg0NhcCgMDoXBoTA4FAaHwuBQGBwKg0Nh/wHOa8vCu8t1wgAAAABJRU5ErkJggg==">
 
   <!-- ============================================
        STYLES
@@ -616,10 +622,10 @@
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      background: rgba(22, 25, 31, 0.85);
+      background: rgba(10, 12, 18, 0.92);
       opacity: 0;
       pointer-events: none;
-      transition: opacity 0.4s ease;
+      transition: opacity 0.3s ease;
     }
 
     .celebration-overlay.active {
@@ -630,27 +636,51 @@
     .celebration-message {
       text-align: center;
       z-index: 2;
-      padding: 0 30px;
+      padding: 0 24px;
     }
 
     .celebration-emoji {
-      font-size: 72px;
-      margin-bottom: 12px;
-      display: block;
-      animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      display: none;
+    }
+
+    .celebration-big-number {
+      font-size: 96px;
+      font-weight: 900;
+      line-height: 1;
+      color: #fff;
+      text-shadow: 0 0 30px #4FE0CB, 0 0 80px #4FE0CB, 0 0 120px #00FFEA;
+      letter-spacing: -4px;
+      margin-bottom: 6px;
+      animation: popIn 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     }
 
     .celebration-title {
-      font-size: 30px;
-      font-weight: 800;
-      color: var(--primary);
-      margin-bottom: 8px;
+      font-size: 28px;
+      font-weight: 900;
+      color: #4FE0CB;
+      margin-bottom: 10px;
+      text-shadow: 0 0 16px #4FE0CB, 0 0 40px #4FE0CB;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      animation: popIn 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275) 0.1s both;
     }
 
     .celebration-subtitle {
-      font-size: 18px;
-      color: var(--text);
+      font-size: 16px;
+      color: rgba(255,255,255,0.7);
       font-weight: 600;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      animation: popIn 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275) 0.2s both;
+    }
+
+    .celebration-tap-hint {
+      position: absolute;
+      bottom: 48px;
+      font-size: 13px;
+      color: rgba(255,255,255,0.35);
+      letter-spacing: 1px;
+      text-transform: uppercase;
     }
 
     .celebration-canvas {
@@ -661,7 +691,7 @@
     }
 
     @keyframes popIn {
-      0% { transform: scale(0.3); opacity: 0; }
+      0% { transform: scale(0.5); opacity: 0; }
       100% { transform: scale(1); opacity: 1; }
     }
   </style>
@@ -1258,7 +1288,6 @@
       }
 
       if (newMilestone !== null) {
-        // Save it so we don't celebrate it again
         const data2 = loadData();
         if (!data2.milestonesReached[exerciseId]) data2.milestonesReached[exerciseId] = [];
         data2.milestonesReached[exerciseId].push(newMilestone);
@@ -1267,16 +1296,15 @@
         const label = newMilestone >= 60
           ? (newMilestone / 60) + " min"
           : newMilestone + " sec";
-        showCelebration("🏆", label + " " + exName + "!", "New milestone reached!");
+        showCelebration(label, "New Milestone!", exName);
       } else {
-        // No duration milestone — check streak milestones
         const exStreak = dataAfterSave.streaks[exerciseId];
         if (exStreak && STREAK_MILESTONES.indexOf(exStreak.current) !== -1) {
-          showCelebration("🔥", exStreak.current + " Day Streak!", exName);
+          showCelebration(exStreak.current + " days", "Streak!", exName);
         } else {
           const overall = dataAfterSave.streaks.overall;
           if (overall && STREAK_MILESTONES.indexOf(overall.current) !== -1) {
-            showCelebration("⚡", overall.current + " Day Streak!", "Keep it up!");
+            showCelebration(overall.current + " days", "Streak!", "Keep it up!");
           }
         }
       }
@@ -1669,74 +1697,138 @@
     let confettiAnimId = null;
     let confettiParticles = [];
 
-    function showCelebration(emoji, title, subtitle) {
+    function showCelebration(bigNumber, title, subtitle) {
       const overlay = document.getElementById("celebration-overlay");
-      document.getElementById("celebration-emoji").textContent = emoji;
+      document.getElementById("celebration-big-number").textContent = bigNumber;
       document.getElementById("celebration-title").textContent = title;
       document.getElementById("celebration-subtitle").textContent = subtitle;
 
       overlay.classList.add("active");
-      startConfetti();
+      startBurst();
 
       if (celebrationTimeout) clearTimeout(celebrationTimeout);
-      celebrationTimeout = setTimeout(dismissCelebration, 3500);
+      celebrationTimeout = setTimeout(dismissCelebration, 6000);
     }
 
     function dismissCelebration() {
       const overlay = document.getElementById("celebration-overlay");
       overlay.classList.remove("active");
-      stopConfetti();
+      stopBurst();
       if (celebrationTimeout) clearTimeout(celebrationTimeout);
     }
 
-    // ---- Confetti ----
-    function startConfetti() {
+    // ---- Neon shockwave burst ----
+    function startBurst() {
       const canvas = document.getElementById("celebration-canvas");
       const ctx = canvas.getContext("2d");
       canvas.width = window.innerWidth;
       canvas.height = window.innerHeight;
 
-      const colors = ["#4FE0CB", "#7DD3F0", "#A78BFA", "#F472B6", "#FACC15", "#34D399", "#FB923C"];
-      confettiParticles = [];
+      const cx = canvas.width / 2;
+      const cy = canvas.height / 2;
+      const neonColors = ["#4FE0CB", "#00FFEA", "#7DD3F0", "#BF5FFF", "#FF2D78", "#FFE600", "#00FF9F", "#FF6FD8"];
 
-      for (let i = 0; i < 120; i++) {
-        confettiParticles.push({
-          x: Math.random() * canvas.width,
-          y: Math.random() * canvas.height - canvas.height,
-          w: Math.random() * 10 + 5,
-          h: Math.random() * 6 + 3,
-          color: colors[Math.floor(Math.random() * colors.length)],
-          rotation: Math.random() * Math.PI * 2,
-          rotationSpeed: (Math.random() - 0.5) * 0.2,
-          speedY: Math.random() * 4 + 2,
-          speedX: (Math.random() - 0.5) * 2,
-          opacity: 1
+      const rings = [];
+      // 3 waves of rings, staggered
+      for (let wave = 0; wave < 3; wave++) {
+        for (let i = 0; i < 4; i++) {
+          rings.push({
+            radius: 0,
+            maxRadius: Math.max(canvas.width, canvas.height),
+            speed: 10 + i * 6,
+            color: neonColors[(wave * 4 + i) % neonColors.length],
+            lineWidth: 4 - i * 0.5,
+            opacity: 1,
+            delay: wave * 30 + i * 5,
+            frame: 0
+          });
+        }
+      }
+
+      const sparks = [];
+      const sparkCount = 72;
+      for (let i = 0; i < sparkCount; i++) {
+        const angle = (Math.PI * 2 / sparkCount) * i + (Math.random() * 0.15);
+        const speed = Math.random() * 16 + 10;
+        sparks.push({
+          x: cx, y: cy,
+          vx: Math.cos(angle) * speed,
+          vy: Math.sin(angle) * speed,
+          color: neonColors[Math.floor(Math.random() * neonColors.length)],
+          opacity: 1,
+          delay: Math.floor(Math.random() * 10),
+          frame: 0,
+          trail: []
+        });
+      }
+
+      // Second wave of sparks slightly delayed
+      for (let i = 0; i < 36; i++) {
+        const angle = (Math.PI * 2 / 36) * i + 0.08;
+        const speed = Math.random() * 20 + 14;
+        sparks.push({
+          x: cx, y: cy,
+          vx: Math.cos(angle) * speed,
+          vy: Math.sin(angle) * speed,
+          color: neonColors[Math.floor(Math.random() * neonColors.length)],
+          opacity: 1,
+          delay: 20 + Math.floor(Math.random() * 10),
+          frame: 0,
+          trail: []
         });
       }
 
       function drawFrame() {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
-        let allGone = true;
 
-        confettiParticles.forEach(function(p) {
-          p.y += p.speedY;
-          p.x += p.speedX;
-          p.rotation += p.rotationSpeed;
-          if (p.y > canvas.height * 0.7) {
-            p.opacity = Math.max(0, p.opacity - 0.03);
+        rings.forEach(function(r) {
+          if (r.frame < r.delay) { r.frame++; return; }
+          r.radius += r.speed;
+          r.opacity = Math.max(0, 1 - (r.radius / r.maxRadius) * 1.3);
+          if (r.opacity > 0) {
+            ctx.save();
+            ctx.globalAlpha = r.opacity;
+            ctx.strokeStyle = r.color;
+            ctx.lineWidth = Math.max(0.5, r.lineWidth);
+            ctx.shadowColor = r.color;
+            ctx.shadowBlur = 28;
+            ctx.beginPath();
+            ctx.arc(cx, cy, r.radius, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.restore();
           }
-          if (p.opacity > 0) allGone = false;
-
-          ctx.save();
-          ctx.globalAlpha = p.opacity;
-          ctx.translate(p.x, p.y);
-          ctx.rotate(p.rotation);
-          ctx.fillStyle = p.color;
-          ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
-          ctx.restore();
         });
 
-        if (!allGone) {
+        sparks.forEach(function(s) {
+          if (s.frame < s.delay) { s.frame++; return; }
+          s.trail.push({ x: s.x, y: s.y });
+          if (s.trail.length > 6) s.trail.shift();
+          s.x += s.vx;
+          s.y += s.vy;
+          s.vx *= 0.95;
+          s.vy *= 0.95;
+          s.opacity -= 0.016;
+          if (s.opacity > 0 && s.trail.length > 1) {
+            ctx.save();
+            ctx.globalAlpha = Math.max(0, s.opacity);
+            ctx.strokeStyle = s.color;
+            ctx.lineWidth = 2.5;
+            ctx.shadowColor = s.color;
+            ctx.shadowBlur = 16;
+            ctx.lineCap = "round";
+            ctx.beginPath();
+            ctx.moveTo(s.trail[0].x, s.trail[0].y);
+            ctx.lineTo(s.x, s.y);
+            ctx.stroke();
+            ctx.restore();
+          }
+        });
+
+        const anyVisible =
+          rings.some(function(r) { return r.opacity > 0 || r.frame < r.delay; }) ||
+          sparks.some(function(s) { return s.opacity > 0 || s.frame < s.delay; });
+
+        if (anyVisible) {
           confettiAnimId = requestAnimationFrame(drawFrame);
         } else {
           ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -1746,7 +1838,7 @@
       confettiAnimId = requestAnimationFrame(drawFrame);
     }
 
-    function stopConfetti() {
+    function stopBurst() {
       if (confettiAnimId) cancelAnimationFrame(confettiAnimId);
       const canvas = document.getElementById("celebration-canvas");
       const ctx = canvas.getContext("2d");
@@ -1817,10 +1909,11 @@
   <div class="celebration-overlay" id="celebration-overlay" onclick="dismissCelebration()">
     <canvas class="celebration-canvas" id="celebration-canvas"></canvas>
     <div class="celebration-message">
-      <span class="celebration-emoji" id="celebration-emoji">🎉</span>
-      <div class="celebration-title" id="celebration-title">Personal Best!</div>
+      <div class="celebration-big-number" id="celebration-big-number"></div>
+      <div class="celebration-title" id="celebration-title"></div>
       <div class="celebration-subtitle" id="celebration-subtitle"></div>
     </div>
+    <div class="celebration-tap-hint">Tap anywhere to continue</div>
   </div>
 
 </body>
