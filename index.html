@@ -553,6 +553,60 @@
       border-color: var(--danger) !important;
     }
 
+    /* ---- Custom confirm modal ---- */
+    .confirm-modal-backdrop {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.6);
+      z-index: 8888;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .confirm-modal {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 24px 20px;
+      margin: 20px;
+      max-width: 340px;
+      width: 100%;
+    }
+
+    .confirm-modal p {
+      color: var(--text);
+      font-size: 16px;
+      line-height: 1.5;
+      margin-bottom: 20px;
+      text-align: center;
+    }
+
+    .confirm-modal-btns {
+      display: flex;
+      gap: 10px;
+    }
+
+    .confirm-modal-btns button {
+      flex: 1;
+      padding: 13px;
+      border-radius: 10px;
+      font-size: 15px;
+      font-weight: 700;
+      border: none;
+      cursor: pointer;
+    }
+
+    .confirm-cancel-btn {
+      background: var(--secondary);
+      color: var(--text);
+    }
+
+    .confirm-ok-btn {
+      background: var(--danger);
+      color: #fff;
+    }
+
     /* ---- Celebration overlay ---- */
     .celebration-overlay {
       position: fixed;
@@ -753,6 +807,10 @@
          overall: { current: 0, longest: 0, lastDate: "YYYY-MM-DD" | null },
          "<exerciseId>": { current: 0, longest: 0, lastDate: "YYYY-MM-DD" | null }
        }
+
+       milestonesReached: {
+         "<exerciseId>": [30, 60, 120, ...]   // duration milestones already celebrated
+       }
        ============================================ -->
   <script>
     const STORAGE_KEY = "plankometer_data";
@@ -769,7 +827,8 @@
       personalBests: {},
       streaks: {
         overall: { current: 0, longest: 0, lastDate: null }
-      }
+      },
+      milestonesReached: {}
     };
 
     function loadData() {
@@ -784,7 +843,8 @@
           exercises: parsed.exercises || DEFAULT_EXERCISES,
           sessions: parsed.sessions || [],
           personalBests: parsed.personalBests || {},
-          streaks: parsed.streaks || { overall: { current: 0, longest: 0, lastDate: null } }
+          streaks: parsed.streaks || { overall: { current: 0, longest: 0, lastDate: null } },
+          milestonesReached: parsed.milestonesReached || {}
         };
       } catch (err) {
         console.error("Failed to load data, using defaults:", err);
@@ -815,6 +875,29 @@
       return `${prefix}_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
     }
 
+    // Custom confirm replacing browser confirm() which Chrome may block
+    let confirmResolve = null;
+    function customConfirm(message, okLabel) {
+      return new Promise(function(resolve) {
+        confirmResolve = resolve;
+        document.getElementById("confirm-modal-message").textContent = message;
+        if (okLabel) {
+          document.querySelector(".confirm-ok-btn").textContent = okLabel;
+        } else {
+          document.querySelector(".confirm-ok-btn").textContent = "Confirm";
+        }
+        document.getElementById("confirm-modal-backdrop").style.display = "flex";
+      });
+    }
+
+    function resolveConfirm(result) {
+      document.getElementById("confirm-modal-backdrop").style.display = "none";
+      if (confirmResolve) {
+        confirmResolve(result);
+        confirmResolve = null;
+      }
+    }
+
     // ---- Export / Import ----
 
     function exportData() {
@@ -831,7 +914,7 @@
       URL.revokeObjectURL(url);
     }
 
-    function importData(jsonString) {
+    async function importData(jsonString) {
       try {
         const parsed = JSON.parse(jsonString);
         if (!parsed.exercises || !Array.isArray(parsed.exercises)) {
@@ -840,20 +923,21 @@
         if (!parsed.sessions || !Array.isArray(parsed.sessions)) {
           throw new Error("Invalid file: missing sessions list");
         }
-        const confirmed = confirm(
-          "This will replace ALL current data with the imported file. This cannot be undone. Continue?"
+        const confirmed = await customConfirm(
+          "This will replace ALL current data with the imported file. This cannot be undone. Continue?",
+          "Replace"
         );
         if (!confirmed) return false;
         saveData({
           exercises: parsed.exercises,
           sessions: parsed.sessions,
           personalBests: parsed.personalBests || {},
-          streaks: parsed.streaks || { overall: { current: 0, longest: 0, lastDate: null } }
+          streaks: parsed.streaks || { overall: { current: 0, longest: 0, lastDate: null } },
+          milestonesReached: parsed.milestonesReached || {}
         });
         return true;
       } catch (err) {
         console.error("Import failed:", err);
-        alert("Import failed: " + err.message);
         return false;
       }
     }
@@ -924,30 +1008,23 @@
       renderExerciseList();
     }
 
-    function deleteExercise(index) {
+    async function deleteExercise(index) {
       const data = loadData();
       const ex = data.exercises[index];
 
-      // Check if this exercise has any sessions
       const hasSessions = data.sessions.some(function(s) { return s.exerciseId === ex.id; });
-      if (hasSessions) {
-        const confirmed = confirm(
-          'Delete "' + ex.name + '"? This exercise has logged sessions — they will also be deleted. This cannot be undone.'
-        );
-        if (!confirmed) return;
-      } else {
-        const confirmed = confirm('Delete "' + ex.name + '"?');
-        if (!confirmed) return;
-      }
+      const msg = hasSessions
+        ? 'Delete "' + ex.name + '"? This exercise has logged sessions — they will also be deleted. This cannot be undone.'
+        : 'Delete "' + ex.name + '"?';
 
-      // Remove exercise
+      const confirmed = await customConfirm(msg, "Delete");
+      if (!confirmed) return;
+
       data.exercises.splice(index, 1);
-      // Remove related sessions
       data.sessions = data.sessions.filter(function(s) { return s.exerciseId !== ex.id; });
-      // Remove personal best
       delete data.personalBests[ex.id];
-      // Remove streak
       delete data.streaks[ex.id];
+      delete data.milestonesReached[ex.id];
 
       saveData(data);
       renderExerciseList();
@@ -1145,9 +1222,6 @@
 
       const data = loadData();
 
-      // Capture old PB before saving so we can detect a new one
-      const oldPb = data.personalBests[exerciseId] ? data.personalBests[exerciseId].duration : null;
-
       const now = new Date();
       const session = {
         id: generateId("s"),
@@ -1159,19 +1233,46 @@
       data.sessions.push(session);
       saveData(data);
 
+      const savedDuration = pendingDuration;
+      data.sessions.push(session);
+      saveData(data);
+
       const dataAfterSave = recalculateStreaks();
       renderStats();
       hideReviewScreen();
 
-      // Only celebrate PB if duration is actually better than old PB
-      const isNewPb = oldPb === null || pendingDuration > oldPb;
-      if (isNewPb) {
-        checkCelebrations(exerciseId, pendingDuration, dataAfterSave);
+      // Check duration milestones
+      const DURATION_MILESTONES = [15, 30, 45, 60, 90, 120, 180, 300];
+      const reached = dataAfterSave.milestonesReached[exerciseId] || [];
+      const ex = dataAfterSave.exercises.find(function(e) { return e.id === exerciseId; });
+      const exName = ex ? ex.name : "exercise";
+
+      // Find highest milestone this session reached that hasn't been celebrated yet
+      let newMilestone = null;
+      for (let i = DURATION_MILESTONES.length - 1; i >= 0; i--) {
+        const m = DURATION_MILESTONES[i];
+        if (savedDuration >= m && reached.indexOf(m) === -1) {
+          newMilestone = m;
+          break;
+        }
+      }
+
+      if (newMilestone !== null) {
+        // Save it so we don't celebrate it again
+        const data2 = loadData();
+        if (!data2.milestonesReached[exerciseId]) data2.milestonesReached[exerciseId] = [];
+        data2.milestonesReached[exerciseId].push(newMilestone);
+        saveData(data2);
+
+        const label = newMilestone >= 60
+          ? (newMilestone / 60) + " min"
+          : newMilestone + " sec";
+        showCelebration("🏆", label + " " + exName + "!", "New milestone reached!");
       } else {
-        // Still check streak milestones even if not a PB
+        // No duration milestone — check streak milestones
         const exStreak = dataAfterSave.streaks[exerciseId];
         if (exStreak && STREAK_MILESTONES.indexOf(exStreak.current) !== -1) {
-          showCelebration("🔥", exStreak.current + " Day Streak!", dataAfterSave.exercises.find(function(e) { return e.id === exerciseId; }).name);
+          showCelebration("🔥", exStreak.current + " Day Streak!", exName);
         } else {
           const overall = dataAfterSave.streaks.overall;
           if (overall && STREAK_MILESTONES.indexOf(overall.current) !== -1) {
@@ -1506,8 +1607,8 @@
       renderHistory();
     }
 
-    function deleteSession(sessionId) {
-      const confirmed = confirm("Delete this session? This cannot be undone.");
+    async function deleteSession(sessionId) {
+      const confirmed = await customConfirm("Delete this session? This cannot be undone.", "Delete");
       if (!confirmed) return;
 
       const data = loadData();
@@ -1519,13 +1620,14 @@
       renderHistory();
     }
 
-    function clearAllData() {
-      const confirmed = confirm("Reset ALL data? This will delete every session, personal best, and streak. This cannot be undone.");
+    async function clearAllData() {
+      const confirmed = await customConfirm("Reset ALL data? This will delete every session, personal best, and streak. This cannot be undone.", "Reset");
       if (!confirmed) return;
       const data = loadData();
       data.sessions = [];
       data.personalBests = {};
       data.streaks = { overall: { current: 0, longest: 0, lastDate: null } };
+      data.milestonesReached = {};
       saveData(data);
       recalculateStreaks();
       renderStats();
@@ -1695,6 +1797,19 @@
     renderHistoryFilter();
     renderStats();
   </script>
+
+  <!-- ============================================
+       CUSTOM CONFIRM MODAL
+       ============================================ -->
+  <div id="confirm-modal-backdrop" style="display:none" class="confirm-modal-backdrop">
+    <div class="confirm-modal">
+      <p id="confirm-modal-message"></p>
+      <div class="confirm-modal-btns">
+        <button class="confirm-cancel-btn" onclick="resolveConfirm(false)">Cancel</button>
+        <button class="confirm-ok-btn" onclick="resolveConfirm(true)">Confirm</button>
+      </div>
+    </div>
+  </div>
 
   <!-- ============================================
        CELEBRATION OVERLAY
