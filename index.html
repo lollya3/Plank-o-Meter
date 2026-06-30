@@ -238,6 +238,7 @@
       color: var(--primary);
       margin-bottom: 8px;
       letter-spacing: -1px;
+      transition: color 0.2s ease;
     }
 
     .timer-hint {
@@ -1156,10 +1157,203 @@
       return totalSeconds.toFixed(1);
     }
 
+    // Colors for each milestone stage — starts at teal, shifts through the sequence
+    // Each color corresponds to the color AFTER passing that milestone
+    // Snap color stages — only 3 change points, no gradual fade
+    // stage 0: 0-1min (teal), stage 1: 1-2min (purple), stage 2: 2-3min (gold+sparkle), stage 3: 3min+ (pink+sparkle)
+    const TIMER_SNAP_MILESTONES = [60, 120, 180, 240, 300, 360];
+    const TIMER_SNAP_THEMES = [
+      { primary: "rgb(79,224,203)",  accent: "rgb(125,211,240)", sparkle: null,    density: 0   },  // 0-1min:  teal
+      { primary: "rgb(150,50,255)",  accent: "rgb(190,120,255)", sparkle: "purple", density: 15 },  // 1-2min:  purple, light sparkles
+      { primary: "rgb(204,0,255)",   accent: "rgb(230,120,255)", sparkle: "violet", density: 40 },  // 2-3min:  highlighter violet, medium sparkles
+      { primary: "rgb(255,45,120)",  accent: "rgb(255,120,180)", sparkle: "pink",   density: 55 },  // 3-4min:  hot pink, medium-dense
+      { primary: "rgb(0,180,255)",   accent: "rgb(100,220,255)", sparkle: "blue",   density: 70 },  // 4-5min:  electric blue, dense
+      { primary: "rgb(220,220,255)", accent: "rgb(255,255,255)", sparkle: "white",  density: 85 },  // 5-6min:  silver/white, very dense
+      { primary: "rgb(0,255,220)",   accent: "rgb(100,255,240)", sparkle: "cyan",   density: 100},  // 6min+:   peak cyan, maximum
+    ];
+
+    let sparkleAnimId = null;
+    let sparkleParticles = [];
+    let sparkleCanvas = null;
+    let sparkleCtx = null;
+    let currentSparkleColor = null;
+
+    function getSnapStage(elapsedSec) {
+      let stage = 0;
+      for (let i = 0; i < TIMER_SNAP_MILESTONES.length; i++) {
+        if (elapsedSec >= TIMER_SNAP_MILESTONES[i]) stage = i + 1;
+      }
+      return stage;
+    }
+
+    function applyTheme(theme) {
+      document.body.style.setProperty("--primary", theme.primary);
+      document.body.style.setProperty("--accent", theme.accent);
+      document.body.style.setProperty("--primary-text", "#16191F");
+    }
+
+    function resetTheme() {
+      document.body.style.removeProperty("--primary");
+      document.body.style.removeProperty("--accent");
+      document.body.style.removeProperty("--primary-text");
+      stopSparkle();
+    }
+
+    // ---- Background sparkle effect ----
+    function startSparkle(color, density) {
+      if (currentSparkleColor === color) return;
+      stopSparkle();
+      currentSparkleColor = color;
+
+      sparkleCanvas = document.getElementById("sparkle-canvas");
+      if (!sparkleCanvas) {
+        sparkleCanvas = document.createElement("canvas");
+        sparkleCanvas.id = "sparkle-canvas";
+        sparkleCanvas.style.cssText = "position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:1;";
+        document.body.appendChild(sparkleCanvas);
+      }
+      sparkleCanvas.width = window.innerWidth;
+      sparkleCanvas.height = window.innerHeight;
+      sparkleCtx = sparkleCanvas.getContext("2d");
+      sparkleParticles = [];
+
+      const colorMap = {
+        purple: ["#BF00FF", "#D966FF", "#9B30D9", "#CC80FF", "#E0B0FF"],
+        violet: ["#E600FF", "#F066FF", "#FF80FF", "#D633FF", "#FFB3FF"],
+        pink:   ["#FF2D78", "#FF6FAE", "#FF90C0", "#FF45A0", "#FFAAD0"],
+        blue:   ["#00B4FF", "#40CFFF", "#80E0FF", "#00D0FF", "#60E8FF"],
+        white:  ["#FFFFFF", "#E0E8FF", "#C8D8FF", "#F0F4FF", "#DDEEFF"],
+        cyan:   ["#00FFD4", "#40FFE8", "#00E8C0", "#80FFF0", "#00FFC8"],
+      };
+
+      const colors = colorMap[color] || colorMap.cyan;
+
+      // Weighted color picker (currently unused now that gold is removed, kept for future use)
+      const colorWeights = {};
+      const weights = colorWeights[color] || null;
+
+      function pickColor() {
+        if (!weights) return colors[Math.floor(Math.random() * colors.length)];
+        const total = weights.reduce(function(a,b){return a+b;}, 0);
+        let r = Math.random() * total;
+        for (let i = 0; i < weights.length; i++) {
+          if (r < weights[i]) return colors[i];
+          r -= weights[i];
+        }
+        return colors[0];
+      }
+
+      // Center zone to avoid (where timer number lives)
+      const cx = sparkleCanvas.width / 2;
+      const cy = sparkleCanvas.height * 0.35; // timer is roughly in upper-middle
+      const avoidRadius = Math.min(sparkleCanvas.width, sparkleCanvas.height) * 0.22;
+
+      function spawnSparkle() {
+        // Pick a position that's not in the avoid zone
+        let x, y, attempts = 0;
+        do {
+          x = Math.random() * sparkleCanvas.width;
+          y = Math.random() * sparkleCanvas.height;
+          attempts++;
+        } while (attempts < 10 && Math.sqrt((x-cx)*(x-cx)+(y-cy)*(y-cy)) < avoidRadius);
+
+        const particleColor = pickColor();
+        const isHighlight = weights && particleColor === colors[colors.length - 1];
+
+        sparkleParticles.push({
+          x: x, y: y,
+          size: isHighlight ? Math.random() * 2 + 2 : Math.random() * 3 + 1,
+          opacity: 0,
+          maxOpacity: isHighlight ? 1 : Math.random() * 0.6 + 0.2,
+          phase: "in",
+          holdFrames: isHighlight ? Math.floor(Math.random() * 6 + 3) : Math.floor(Math.random() * 20 + 10),
+          holdCount: 0,
+          fadeSpeed: isHighlight ? 0.12 : 0.04 + Math.random() * 0.03,
+          color: particleColor,
+          twinkle: !isHighlight && Math.random() > 0.4
+        });
+      }
+
+      // Seed based on density
+      const seedCount = Math.floor(density * 0.4);
+      for (let i = 0; i < seedCount; i++) spawnSparkle();
+
+      // Spawn rate based on density (0-100 → 0.1-0.6 per frame)
+      const spawnRate = 0.1 + (density / 100) * 0.5;
+
+      function drawSparkle() {
+        sparkleCtx.clearRect(0, 0, sparkleCanvas.width, sparkleCanvas.height);
+
+        if (Math.random() < spawnRate) spawnSparkle();
+
+        sparkleParticles = sparkleParticles.filter(function(p) {
+          if (p.phase === "in") {
+            p.opacity += p.fadeSpeed;
+            if (p.opacity >= p.maxOpacity) { p.opacity = p.maxOpacity; p.phase = "hold"; }
+          } else if (p.phase === "hold") {
+            p.holdCount++;
+            if (p.twinkle) p.opacity = p.maxOpacity * (0.6 + 0.4 * Math.sin(p.holdCount * 0.3));
+            if (p.holdCount >= p.holdFrames) p.phase = "out";
+          } else {
+            p.opacity -= p.fadeSpeed;
+            if (p.opacity <= 0) return false;
+          }
+
+          sparkleCtx.save();
+          sparkleCtx.globalAlpha = Math.max(0, p.opacity);
+          sparkleCtx.fillStyle = p.color;
+          sparkleCtx.translate(p.x, p.y);
+          const s = p.size;
+          sparkleCtx.beginPath();
+          sparkleCtx.moveTo(0, -s * 3);
+          sparkleCtx.lineTo(s * 0.4, -s * 0.4);
+          sparkleCtx.lineTo(s * 3, 0);
+          sparkleCtx.lineTo(s * 0.4, s * 0.4);
+          sparkleCtx.lineTo(0, s * 3);
+          sparkleCtx.lineTo(-s * 0.4, s * 0.4);
+          sparkleCtx.lineTo(-s * 3, 0);
+          sparkleCtx.lineTo(-s * 0.4, -s * 0.4);
+          sparkleCtx.closePath();
+          sparkleCtx.fill();
+          sparkleCtx.restore();
+
+          return true;
+        });
+
+        sparkleAnimId = requestAnimationFrame(drawSparkle);
+      }
+
+      sparkleAnimId = requestAnimationFrame(drawSparkle);
+    }
+
+    function stopSparkle() {
+      if (sparkleAnimId) cancelAnimationFrame(sparkleAnimId);
+      sparkleAnimId = null;
+      currentSparkleColor = null;
+      const canvas = document.getElementById("sparkle-canvas");
+      if (canvas) canvas.remove();
+      sparkleParticles = [];
+    }
+
+    let lastStage = -1;
+
     function updateTimerDisplay() {
       const elapsedMs = Date.now() - timerStartTimestamp;
       const elapsedSec = elapsedMs / 1000;
-      document.getElementById("timer-display").textContent = formatSeconds(elapsedSec);
+      const display = document.getElementById("timer-display");
+      display.textContent = formatSeconds(elapsedSec);
+
+      const stage = getSnapStage(elapsedSec);
+      if (stage !== lastStage) {
+        lastStage = stage;
+        const theme = TIMER_SNAP_THEMES[stage];
+        applyTheme(theme);
+        if (theme.sparkle) {
+          startSparkle(theme.sparkle, theme.density);
+        } else {
+          stopSparkle();
+        }
+      }
     }
 
     function toggleTimer() {
@@ -1174,6 +1368,7 @@
       if (!getSelectedExerciseId()) return; // no exercises exist
       timerRunning = true;
       timerStartTimestamp = Date.now();
+      lastStage = -1;
       timerIntervalId = setInterval(updateTimerDisplay, 100);
 
       const btn = document.getElementById("timer-toggle-btn");
@@ -1196,6 +1391,8 @@
       btn.classList.remove("stop");
       btn.classList.add("start");
       document.getElementById("timer-display").textContent = "0.0";
+      document.getElementById("timer-display").style.color = "";
+      resetTheme();
 
       showReviewScreen();
     }
@@ -1273,19 +1470,25 @@
 
       // Check duration milestones
       const DURATION_MILESTONES = [15, 30, 45, 60, 90, 120, 180, 300];
-      const reached = dataAfterSave.milestonesReached[exerciseId] || [];
-      const ex = dataAfterSave.exercises.find(function(e) { return e.id === exerciseId; });
-      const exName = ex ? ex.name : "exercise";
+      const reached = (dataAfterSave.milestonesReached[exerciseId] || []).slice();
 
-      // Find highest milestone this session reached that hasn't been celebrated yet
-      let newMilestone = null;
+      // Find the highest milestone this session reached
+      let highestReached = null;
       for (let i = DURATION_MILESTONES.length - 1; i >= 0; i--) {
-        const m = DURATION_MILESTONES[i];
-        if (savedDuration >= m && reached.indexOf(m) === -1) {
-          newMilestone = m;
+        if (savedDuration >= DURATION_MILESTONES[i]) {
+          highestReached = DURATION_MILESTONES[i];
           break;
         }
       }
+
+      // Only celebrate if that specific highest milestone hasn't been celebrated yet
+      let newMilestone = null;
+      if (highestReached !== null && reached.indexOf(highestReached) === -1) {
+        newMilestone = highestReached;
+      }
+
+      const ex = dataAfterSave.exercises.find(function(e) { return e.id === exerciseId; });
+      const exName = ex ? ex.name : "exercise";
 
       if (newMilestone !== null) {
         const data2 = loadData();
