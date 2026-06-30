@@ -1196,7 +1196,7 @@
       document.body.style.removeProperty("--primary");
       document.body.style.removeProperty("--accent");
       document.body.style.removeProperty("--primary-text");
-      stopSparkle();
+      removeSparkleCanvas();
     }
 
     // ---- Background sparkle effect ----
@@ -1330,9 +1330,19 @@
       if (sparkleAnimId) cancelAnimationFrame(sparkleAnimId);
       sparkleAnimId = null;
       currentSparkleColor = null;
+      sparkleParticles = [];
+      // Clear the canvas but don't remove it — avoids recreation delay on next stage
+      const canvas = document.getElementById("sparkle-canvas");
+      if (canvas) {
+        const ctx = canvas.getContext("2d");
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+      }
+    }
+
+    function removeSparkleCanvas() {
+      stopSparkle();
       const canvas = document.getElementById("sparkle-canvas");
       if (canvas) canvas.remove();
-      sparkleParticles = [];
     }
 
     let lastStage = -1;
@@ -1369,7 +1379,17 @@
       timerRunning = true;
       timerStartTimestamp = Date.now();
       lastStage = -1;
-      timerIntervalId = setInterval(updateTimerDisplay, 100);
+      timerIntervalId = setInterval(updateTimerDisplay, 50);
+
+      // Pre-create the sparkle canvas now so there's no setup delay later
+      if (!document.getElementById("sparkle-canvas")) {
+        const canvas = document.createElement("canvas");
+        canvas.id = "sparkle-canvas";
+        canvas.style.cssText = "position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:1;";
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        document.body.appendChild(canvas);
+      }
 
       const btn = document.getElementById("timer-toggle-btn");
       btn.textContent = "Stop";
